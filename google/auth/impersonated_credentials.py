@@ -87,9 +87,7 @@ def _make_iam_token_request(
     """
     if iam_endpoint_override:
         iam_endpoint = iam_endpoint_override
-    elif _mtls_helper.check_use_client_cert() or _helpers.get_bool_from_env(
-        "CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE"
-    ):
+    elif _mtls_helper.check_use_client_cert():
         iam_endpoint = iam._IAM_ENDPOINT_MTLS.replace(
             credentials.DEFAULT_UNIVERSE_DOMAIN, universe_domain
         ).format(principal)
@@ -379,9 +377,7 @@ class Credentials(
     def sign_bytes(self, message):
         from google.auth.transport.requests import AuthorizedSession
 
-        if _mtls_helper.check_use_client_cert() or _helpers.get_bool_from_env(
-            "CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE"
-        ):
+        if _mtls_helper.check_use_client_cert():
             iam_sign_endpoint = iam._IAM_SIGN_ENDPOINT_MTLS.replace(
                 credentials.DEFAULT_UNIVERSE_DOMAIN, self.universe_domain
             ).format(self._target_principal)
@@ -623,9 +619,7 @@ class IDTokenCredentials(credentials.CredentialsWithQuotaProject):
     def refresh(self, request):
         from google.auth.transport.requests import AuthorizedSession
 
-        if _mtls_helper.check_use_client_cert() or _helpers.get_bool_from_env(
-            "CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE"
-        ):
+        if _mtls_helper.check_use_client_cert():
             iam_sign_endpoint = iam._IAM_IDTOKEN_ENDPOINT_MTLS.replace(
                 credentials.DEFAULT_UNIVERSE_DOMAIN,
                 self._target_credentials.universe_domain,
@@ -708,9 +702,7 @@ def _sign_jwt_request(request, principal, headers, payload, delegates=[]):
             `iamcredentials.googleapis.com` is not enabled or the
             `Service Account Token Creator` is not assigned
     """
-    if _mtls_helper.check_use_client_cert() or _helpers.get_bool_from_env(
-        "CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE"
-    ):
+    if _mtls_helper.check_use_client_cert():
         iam_endpoint = iam._IAM_SIGNJWT_ENDPOINT_MTLS.format(principal)
     else:
         iam_endpoint = iam._IAM_SIGNJWT_ENDPOINT.format(principal)
