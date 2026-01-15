@@ -21,6 +21,7 @@ import re
 import subprocess
 
 from google.auth import _agent_identity_utils
+from google.auth import _helpers
 from google.auth import environment_vars
 from google.auth import exceptions
 
@@ -456,25 +457,28 @@ def check_use_client_cert():
     # Check if the value of GOOGLE_API_USE_CLIENT_CERTIFICATE is set.
     if use_client_cert:
         return use_client_cert.lower() == "true"
-    else:
-        # Check if the value of GOOGLE_API_CERTIFICATE_CONFIG is set.
-        cert_path = getenv("GOOGLE_API_CERTIFICATE_CONFIG")
-        if cert_path:
-            try:
-                with open(cert_path, "r") as f:
-                    content = json.load(f)
-                    # verify json has workload key
-                    content["cert_configs"]["workload"]
-                    return True
-            except (
-                FileNotFoundError,
-                OSError,
-                KeyError,
-                TypeError,
-                json.JSONDecodeError,
-            ) as e:
-                _LOGGER.debug("error decoding certificate: %s", e)
-        return False
+
+    if _helpers.get_bool_from_env("CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE"):
+        return True
+
+    # Check if the value of GOOGLE_API_CERTIFICATE_CONFIG is set.
+    cert_path = getenv("GOOGLE_API_CERTIFICATE_CONFIG")
+    if cert_path:
+        try:
+            with open(cert_path, "r") as f:
+                content = json.load(f)
+                # verify json has workload key
+                content["cert_configs"]["workload"]
+                return True
+        except (
+            FileNotFoundError,
+            OSError,
+            KeyError,
+            TypeError,
+            json.JSONDecodeError,
+        ) as e:
+            _LOGGER.debug("error decoding certificate: %s", e)
+    return False
 
 
 def check_parameters_for_unauthorized_response(cached_cert):

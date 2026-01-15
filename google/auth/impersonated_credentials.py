@@ -38,6 +38,7 @@ from google.auth import exceptions
 from google.auth import iam
 from google.auth import jwt
 from google.auth import metrics
+from google.auth.transport import _mtls_helper
 from google.oauth2 import _client
 
 
@@ -84,9 +85,16 @@ def _make_iam_token_request(
             `iamcredentials.googleapis.com` is not enabled or the
             `Service Account Token Creator` is not assigned
     """
-    iam_endpoint = iam_endpoint_override or iam._IAM_ENDPOINT.replace(
-        credentials.DEFAULT_UNIVERSE_DOMAIN, universe_domain
-    ).format(principal)
+    if iam_endpoint_override:
+        iam_endpoint = iam_endpoint_override
+    elif _mtls_helper.check_use_client_cert():
+        iam_endpoint = iam._IAM_ENDPOINT_MTLS.replace(
+            credentials.DEFAULT_UNIVERSE_DOMAIN, universe_domain
+        ).format(principal)
+    else:
+        iam_endpoint = iam._IAM_ENDPOINT.replace(
+            credentials.DEFAULT_UNIVERSE_DOMAIN, universe_domain
+        ).format(principal)
 
     body = json.dumps(body).encode("utf-8")
 
@@ -369,9 +377,14 @@ class Credentials(
     def sign_bytes(self, message):
         from google.auth.transport.requests import AuthorizedSession
 
-        iam_sign_endpoint = iam._IAM_SIGN_ENDPOINT.replace(
-            credentials.DEFAULT_UNIVERSE_DOMAIN, self.universe_domain
-        ).format(self._target_principal)
+        if _mtls_helper.check_use_client_cert():
+            iam_sign_endpoint = iam._IAM_SIGN_ENDPOINT_MTLS.replace(
+                credentials.DEFAULT_UNIVERSE_DOMAIN, self.universe_domain
+            ).format(self._target_principal)
+        else:
+            iam_sign_endpoint = iam._IAM_SIGN_ENDPOINT.replace(
+                credentials.DEFAULT_UNIVERSE_DOMAIN, self.universe_domain
+            ).format(self._target_principal)
 
         body = {
             "payload": base64.b64encode(message).decode("utf-8"),
@@ -606,10 +619,16 @@ class IDTokenCredentials(credentials.CredentialsWithQuotaProject):
     def refresh(self, request):
         from google.auth.transport.requests import AuthorizedSession
 
-        iam_sign_endpoint = iam._IAM_IDTOKEN_ENDPOINT.replace(
-            credentials.DEFAULT_UNIVERSE_DOMAIN,
-            self._target_credentials.universe_domain,
-        ).format(self._target_credentials.signer_email)
+        if _mtls_helper.check_use_client_cert():
+            iam_sign_endpoint = iam._IAM_IDTOKEN_ENDPOINT_MTLS.replace(
+                credentials.DEFAULT_UNIVERSE_DOMAIN,
+                self._target_credentials.universe_domain,
+            ).format(self._target_credentials.signer_email)
+        else:
+            iam_sign_endpoint = iam._IAM_IDTOKEN_ENDPOINT.replace(
+                credentials.DEFAULT_UNIVERSE_DOMAIN,
+                self._target_credentials.universe_domain,
+            ).format(self._target_credentials.signer_email)
 
         body = {
             "audience": self._target_audience,
@@ -683,7 +702,10 @@ def _sign_jwt_request(request, principal, headers, payload, delegates=[]):
             `iamcredentials.googleapis.com` is not enabled or the
             `Service Account Token Creator` is not assigned
     """
-    iam_endpoint = iam._IAM_SIGNJWT_ENDPOINT.format(principal)
+    if _mtls_helper.check_use_client_cert():
+        iam_endpoint = iam._IAM_SIGNJWT_ENDPOINT_MTLS.format(principal)
+    else:
+        iam_endpoint = iam._IAM_SIGNJWT_ENDPOINT.format(principal)
 
     body = {"delegates": delegates, "payload": json.dumps(payload)}
     body = json.dumps(body).encode("utf-8")

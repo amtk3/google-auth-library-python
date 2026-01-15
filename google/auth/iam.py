@@ -58,6 +58,26 @@ _IAM_IDTOKEN_ENDPOINT = (
     + "projects/-/serviceAccounts/{}:generateIdToken"
 )
 
+_IAM_ENDPOINT_MTLS = (
+    "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
+    + "/serviceAccounts/{}:generateAccessToken"
+)
+
+_IAM_SIGN_ENDPOINT_MTLS = (
+    "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
+    + "/serviceAccounts/{}:signBlob"
+)
+
+_IAM_SIGNJWT_ENDPOINT_MTLS = (
+    "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
+    + "/serviceAccounts/{}:signJwt"
+)
+
+_IAM_IDTOKEN_ENDPOINT_MTLS = (
+    "https://iamcredentials.mtls.googleapis.com/v1/"
+    + "projects/-/serviceAccounts/{}:generateIdToken"
+)
+
 
 class Signer(crypt.Signer):
     """Signs messages using the IAM `signBlob API`_.
