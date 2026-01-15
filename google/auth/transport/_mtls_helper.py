@@ -21,6 +21,7 @@ import re
 import subprocess
 
 from google.auth import _agent_identity_utils
+from google.auth import _cloud_sdk
 from google.auth import environment_vars
 from google.auth import exceptions
 
@@ -474,6 +475,11 @@ def check_use_client_cert():
                 json.JSONDecodeError,
             ) as e:
                 _LOGGER.debug("error decoding certificate: %s", e)
+
+        # Check if context aware use_client_certificate is set to true in gcloud config.
+        if _cloud_sdk.get_context_aware_use_client_certificate():
+            return True
+
         return False
 
 

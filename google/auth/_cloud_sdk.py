@@ -36,6 +36,12 @@ _CLOUD_SDK_WINDOWS_COMMAND = "gcloud.cmd"
 _CLOUD_SDK_CONFIG_GET_PROJECT_COMMAND = ("config", "get", "project")
 # The command to get google user access token
 _CLOUD_SDK_USER_ACCESS_TOKEN_COMMAND = ("auth", "print-access-token")
+# The command to check if context aware client certificate is enabled
+_CLOUD_SDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE_COMMAND = (
+    "config",
+    "get",
+    "context_aware/use_client_certificate",
+)
 # Cloud SDK's application-default client ID
 CLOUD_SDK_CLIENT_ID = (
     "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com"
@@ -151,3 +157,27 @@ def get_auth_access_token(account=None):
             "Failed to obtain access token", caught_exc
         )
         raise new_exc from caught_exc
+
+
+def get_context_aware_use_client_certificate():
+    """Checks if the context aware use_client_certificate is set to true in the Cloud SDK.
+
+    Returns:
+        bool: True if the context aware use_client_certificate is set to true, False otherwise.
+    """
+    if os.name == "nt":
+        command = _CLOUD_SDK_WINDOWS_COMMAND
+    else:
+        command = _CLOUD_SDK_POSIX_COMMAND
+
+    try:
+        # Ignore the stderr coming from gcloud, so it won't be mixed into the output.
+        use_client_cert = _run_subprocess_ignore_stderr(
+            (command,) + _CLOUD_SDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE_COMMAND
+        )
+
+        # Turn bytes into a string and remove "\n"
+        use_client_cert = _helpers.from_bytes(use_client_cert).strip()
+        return use_client_cert.lower() == "true"
+    except (subprocess.CalledProcessError, OSError, IOError):
+        return False

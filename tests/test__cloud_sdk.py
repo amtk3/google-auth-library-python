@@ -178,3 +178,48 @@ def test_get_auth_access_token_with_exception(check_output):
 
     with pytest.raises(exceptions.UserAccessTokenError):
         _cloud_sdk.get_auth_access_token(account="account")
+
+
+@pytest.mark.parametrize(
+    "data, expected_result",
+    [(b"true\n", True), (b"True\n", True), (b"false\n", False), (b"other\n", False)],
+)
+def test_get_context_aware_use_client_certificate(data, expected_result):
+    check_output_patch = mock.patch(
+        "subprocess.check_output", autospec=True, return_value=data
+    )
+
+    with check_output_patch as check_output:
+        result = _cloud_sdk.get_context_aware_use_client_certificate()
+
+    assert result == expected_result
+    assert check_output.called
+
+
+@mock.patch(
+    "subprocess.check_output",
+    autospec=True,
+    side_effect=subprocess.CalledProcessError(-1, "testing"),
+)
+def test_get_context_aware_use_client_certificate_error(check_output):
+    result = _cloud_sdk.get_context_aware_use_client_certificate()
+    assert result is False
+    assert check_output.called
+
+
+@mock.patch("os.name", new="nt")
+def test_get_context_aware_use_client_certificate_windows():
+    check_output_patch = mock.patch(
+        "subprocess.check_output", autospec=True, return_value=b"true\n"
+    )
+
+    with check_output_patch as check_output:
+        result = _cloud_sdk.get_context_aware_use_client_certificate()
+
+    assert result is True
+    assert check_output.called
+    # Make sure the executable is `gcloud.cmd`.
+    args = check_output.call_args[0]
+    command = args[0]
+    executable = command[0]
+    assert executable == "gcloud.cmd"

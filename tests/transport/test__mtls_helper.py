@@ -781,7 +781,11 @@ class TestCheckUseClientCert(object):
     )
     def test_config_file_missing_keys(self, mock_file):
         mock_file.side_effect = mock.mock_open(read_data='{"cert_configs": {}}')
-        assert _mtls_helper.check_use_client_cert() is False
+        with mock.patch(
+            "google.auth._cloud_sdk.get_context_aware_use_client_certificate"
+        ) as mock_gcloud_check:
+            mock_gcloud_check.return_value = False
+            assert _mtls_helper.check_use_client_cert() is False
 
     @mock.patch("builtins.open", autospec=True)
     @mock.patch.dict(
@@ -793,7 +797,11 @@ class TestCheckUseClientCert(object):
     )
     def test_config_file_bad_json(self, mock_file):
         mock_file.side_effect = mock.mock_open(read_data="{bad_json")
-        assert _mtls_helper.check_use_client_cert() is False
+        with mock.patch(
+            "google.auth._cloud_sdk.get_context_aware_use_client_certificate"
+        ) as mock_gcloud_check:
+            mock_gcloud_check.return_value = False
+            assert _mtls_helper.check_use_client_cert() is False
 
     @mock.patch("builtins.open", autospec=True)
     @mock.patch.dict(
@@ -805,11 +813,27 @@ class TestCheckUseClientCert(object):
     )
     def test_config_file_not_found(self, mock_file):
         mock_file.side_effect = FileNotFoundError
-        assert _mtls_helper.check_use_client_cert() is False
+        with mock.patch(
+            "google.auth._cloud_sdk.get_context_aware_use_client_certificate"
+        ) as mock_gcloud_check:
+            mock_gcloud_check.return_value = False
+            assert _mtls_helper.check_use_client_cert() is False
 
     @mock.patch.dict(os.environ, {}, clear=True)
     def test_no_env_vars_set(self):
-        assert _mtls_helper.check_use_client_cert() is False
+        with mock.patch(
+            "google.auth._cloud_sdk.get_context_aware_use_client_certificate"
+        ) as mock_gcloud_check:
+            mock_gcloud_check.return_value = False
+            assert _mtls_helper.check_use_client_cert() is False
+
+    @mock.patch.dict(os.environ, {}, clear=True)
+    def test_gcloud_config_true(self):
+        with mock.patch(
+            "google.auth._cloud_sdk.get_context_aware_use_client_certificate"
+        ) as mock_gcloud_check:
+            mock_gcloud_check.return_value = True
+            assert _mtls_helper.check_use_client_cert() is True
 
 
 class TestMtlsHelper:
