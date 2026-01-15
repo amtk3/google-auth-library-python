@@ -39,7 +39,12 @@ IAM_RETRY_CODES = {
 
 _IAM_SCOPE = ["https://www.googleapis.com/auth/iam"]
 
-if _mtls_helper.check_use_client_cert():
+if hasattr(_mtls_helper, "check_use_client_cert"):
+    use_client_cert = _mtls_helper.check_use_client_cert()
+else:
+    use_client_cert = False
+
+if use_client_cert:
     _IAM_ENDPOINT = (
         "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
         + "/serviceAccounts/{}:generateAccessToken"
