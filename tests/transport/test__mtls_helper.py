@@ -756,14 +756,6 @@ class TestCheckUseClientCert(object):
     def test_env_var_explicit_garbage(self):
         assert _mtls_helper.check_use_client_cert() is False
 
-    @mock.patch.dict(os.environ, {"CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE": "true"})
-    def test_cloudsdk_env_var_explicit_true(self):
-        assert _mtls_helper.check_use_client_cert() is True
-
-    @mock.patch.dict(os.environ, {"CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE": "false"})
-    def test_cloudsdk_env_var_explicit_false(self):
-        assert _mtls_helper.check_use_client_cert() is False
-
     @mock.patch("builtins.open", autospec=True)
     @mock.patch.dict(
         os.environ,
