@@ -28,6 +28,7 @@ from google.auth import _helpers
 from google.auth import credentials
 from google.auth import crypt
 from google.auth import exceptions
+from google.auth.transport import _mtls_helper
 
 IAM_RETRY_CODES = {
     http_client.INTERNAL_SERVER_ERROR,
@@ -38,25 +39,51 @@ IAM_RETRY_CODES = {
 
 _IAM_SCOPE = ["https://www.googleapis.com/auth/iam"]
 
-_IAM_ENDPOINT = (
-    "https://iamcredentials.googleapis.com/v1/projects/-"
-    + "/serviceAccounts/{}:generateAccessToken"
-)
+if hasattr(_mtls_helper, "check_use_client_cert"):
+    use_client_cert = _mtls_helper.check_use_client_cert()
+else:
+    use_client_cert = False
 
-_IAM_SIGN_ENDPOINT = (
-    "https://iamcredentials.googleapis.com/v1/projects/-"
-    + "/serviceAccounts/{}:signBlob"
-)
+if use_client_cert:
+    _IAM_ENDPOINT = (
+        "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
+        + "/serviceAccounts/{}:generateAccessToken"
+    )
 
-_IAM_SIGNJWT_ENDPOINT = (
-    "https://iamcredentials.googleapis.com/v1/projects/-"
-    + "/serviceAccounts/{}:signJwt"
-)
+    _IAM_SIGN_ENDPOINT = (
+        "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
+        + "/serviceAccounts/{}:signBlob"
+    )
 
-_IAM_IDTOKEN_ENDPOINT = (
-    "https://iamcredentials.googleapis.com/v1/"
-    + "projects/-/serviceAccounts/{}:generateIdToken"
-)
+    _IAM_SIGNJWT_ENDPOINT = (
+        "https://iamcredentials.mtls.googleapis.com/v1/projects/-"
+        + "/serviceAccounts/{}:signJwt"
+    )
+
+    _IAM_IDTOKEN_ENDPOINT = (
+        "https://iamcredentials.mtls.googleapis.com/v1/"
+        + "projects/-/serviceAccounts/{}:generateIdToken"
+    )
+else:
+    _IAM_ENDPOINT = (
+        "https://iamcredentials.googleapis.com/v1/projects/-"
+        + "/serviceAccounts/{}:generateAccessToken"
+    )
+
+    _IAM_SIGN_ENDPOINT = (
+        "https://iamcredentials.googleapis.com/v1/projects/-"
+        + "/serviceAccounts/{}:signBlob"
+    )
+
+    _IAM_SIGNJWT_ENDPOINT = (
+        "https://iamcredentials.googleapis.com/v1/projects/-"
+        + "/serviceAccounts/{}:signJwt"
+    )
+
+    _IAM_IDTOKEN_ENDPOINT = (
+        "https://iamcredentials.googleapis.com/v1/"
+        + "projects/-/serviceAccounts/{}:generateIdToken"
+    )
 
 
 class Signer(crypt.Signer):
